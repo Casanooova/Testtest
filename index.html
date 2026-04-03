@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+/>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Pocket Drive</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: black;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* START SCREEN */
+#startScreen {
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  color: white;
+  background: black;
+  padding:
+    calc(env(safe-area-inset-top) + 20px)
+    calc(env(safe-area-inset-right) + 20px)
+    calc(env(safe-area-inset-bottom) + 20px)
+    calc(env(safe-area-inset-left) + 20px);
+}
+
+.startTitle {
+  font-size: 44px;
+  font-weight: 900;
+}
+
+.startSub {
+  margin-top: 12px;
+  font-size: 20px;
+  opacity: 0.78;
+}
+
+.startBtn {
+  margin-top: 24px;
+  padding: 16px 30px;
+  border-radius: 14px;
+  border: none;
+  background: #1ec75a;
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* MENU SCREEN */
+#menuScreen {
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  background: black;
+}
+
+.menuBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  z-index: 0;
+}
+
+.menuOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.05)),
+    linear-gradient(to top, rgba(0,0,0,0.48), rgba(0,0,0,0.10) 28%, rgba(0,0,0,0.00) 58%);
+}
+
+.menuBar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  width: max-content;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
+}
+
+.menuBtn {
+  width: 122px;
+  padding: 13px 8px;
+  font-size: 12px;
+  border-radius: 18px;
+  border: none;
+  color: white;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+}
+
+.play { background: linear-gradient(45deg, #ff7b00, #ffae00); }
+.tourney { background: linear-gradient(45deg, #00a2ff, #39d4ff); }
+.team { background: linear-gradient(45deg, #b300ff, #ff00c8); }
+.quick { background: linear-gradient(45deg, #00c853, #69f0ae); }
+.settings { background: linear-gradient(45deg, #ff9100, #ffd740); }
+
+/* TEAM SCREEN */
+#teamScreen {
+  background:
+    radial-gradient(circle at top, rgba(22,110,45,0.22), transparent 35%),
+    linear-gradient(to bottom, #07111f, #10223a);
+  color: white;
+  flex-direction: column;
+  padding:
+    calc(env(safe-area-inset-top) + 14px)
+    calc(env(safe-area-inset-right) + 14px)
+    calc(env(safe-area-inset-bottom) + 14px)
+    calc(env(safe-area-inset-left) + 14px);
+}
+
+.teamTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.teamTitle {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.teamBackBtn {
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.teamBody {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* FORMATION VIEW */
+#lineupView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fieldCard {
+  position: relative;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.fieldHeader {
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0.92;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.fieldArea {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(to bottom, #1f8e34, #176c28);
+}
+
+.fieldArea::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.00) 0px,
+      rgba(255,255,255,0.00) 52px,
+      rgba(255,255,255,0.14) 54px,
+      rgba(255,255,255,0.00) 56px
+    );
+  pointer-events: none;
+}
+
+.playerSpot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 114px;
+  min-height: 70px;
+  border: none;
+  border-radius: 18px;
+  color: white;
+  background: rgba(6,16,33,0.72);
+  backdrop-filter: blur(5px);
+  border: 2px solid rgba(255,255,255,0.09);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.22);
+  padding: 8px 8px 7px;
+  text-align: center;
+}
+
+.posLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  opacity: 0.78;
+  margin-bottom: 4px;
+}
+
+.playerName {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.playerOverall {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  background: rgba(255,255,255,0.10);
+}
+
+.spot-ol  { left: 50%; top: 28%; width: 130px; }
+.spot-wr1 { left: 24%; top: 28%; }
+.spot-wr2 { left: 76%; top: 28%; }
+.spot-qb  { left: 50%; top: 56%; }
+.spot-rb  { left: 66%; top: 66%; }
+
+/* DETAIL VIEW */
+#detailView {
+  display: none;
+  height: 100%;
+}
+
+#detailView.active {
+  display: block;
+}
+
+.detailCard {
+  height: 100%;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: auto;
+  padding: 18px;
+}
+
+.detailTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.detailBackBtn {
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.detailTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.detailIdentity h2 {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.detailIdentity .meta {
+  font-size: 14px;
+  opacity: 0.78;
+  font-weight: 700;
+}
+
+.ovrBadge {
+  min-width: 78px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: linear-gradient(45deg, #ffae00, #ff7b00);
+  color: white;
+  text-align: center;
+  box-shadow: 0 10px 22px rgba(255,123,0,0.22);
+}
+
+.ovrBadge .num {
+  display: block;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ovrBadge .label {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.archetype {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.statsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 92px 1fr 40px;
+  gap: 10px;
+  align-items: center;
+}
+
+.statName {
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.9;
+}
+
+.statBar {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.statFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00d4ff, #7dff8a);
+}
+
+.statValue {
+  text-align: right;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+/* SWAP */
+.swapBtn {
+  border: none;
+  background: linear-gradient(45deg, #b300ff, #ff00c8);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 900;
+  margin-bottom: 14px;
+}
+
+#swapPanel {
+  display: none;
+  margin-bottom: 16px;
+}
+
+.swapOption {
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.swapOptionName {
+  font-size: 15px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.swapOptionMeta {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+/* landscape tweaks */
+@media (orientation: landscape) {
+  .menuBar {
+    bottom: calc(env(safe-area-inset-bottom) + 18px);
+    gap: 8px;
+  }
+
+  .menuBtn {
+    width: 116px;
+    padding: 12px 8px;
+    font-size: 11px;
+  }
+
+  .fieldArea {
+    min-height: 250px;
+  }
+
+  .playerSpot {
+    width: 104px;
+    min-height: 64px;
+    padding: 7px 6px;
+  }
+
+  .playerName {
+    font-size: 13px;
+  }
+
+  .detailIdentity h2 {
+    font-size: 24px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="startScreen" class="screen active">
+  <div class="startTitle">Pocket Drive</div>
+  <div class="startSub">Rotate your phone for best experience</div>
+  <button class="startBtn" onclick="goMenu()">Start</button>
+</div>
+
+<div id="menuScreen" class="screen">
+  <img class="menuBg" src="bg.png.PNG" alt="Pocket Drive background" />
+  <div class="menuOverlay"></div>
+
+  <div class="menuBar">
+    <button class="menuBtn play">PLAY</button>
+    <button class="menuBtn tourney">TOURNEY</button>
+    <button class="menuBtn team" onclick="goTeam()">TEAM</button>
+    <button class="menuBtn quick">QUICK</button>
+    <button class="menuBtn settings">SET</button>
+  </div>
+</div>
+
+<div id="teamScreen" class="screen">
+  <div class="teamTopBar">
+    <div class="teamTitle">View Team</div>
+    <button class="teamBackBtn" onclick="goMenu()">Back</button>
+  </div>
+
+  <div class="teamBody">
+    <div id="lineupView">
+      <div class="fieldCard">
+        <div class="fieldHeader">OFFENSIVE LINEUP</div>
+        <div class="fieldArea">
+          <button class="playerSpot spot-wr1" data-slot="wr1"></button>
+          <button class="playerSpot spot-ol" data-slot="ol"></button>
+          <button class="playerSpot spot-wr2" data-slot="wr2"></button>
+          <button class="playerSpot spot-qb" data-slot="qb"></button>
+          <button class="playerSpot spot-rb" data-slot="rb"></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="detailView">
+      <div class="detailCard">
+        <div class="detailTopBar">
+          <div class="teamTitle" style="font-size:22px;">Player Details</div>
+          <button class="detailBackBtn" onclick="showLineup()">Back</button>
+        </div>
+
+        <div class="detailTop">
+          <div class="detailIdentity">
+            <h2 id="detailName">Jaxon Reed</h2>
+            <div class="meta" id="detailMeta">QB • Franchise Starter</div>
+          </div>
+
+          <div class="ovrBadge">
+            <span class="num" id="detailOvr">86</span>
+            <span class="label">OVR</span>
+          </div>
+        </div>
+
+        <div class="archetype" id="detailArchetype">Pocket Passer</div>
+
+        <button id="swapBtn" class="swapBtn">Swap</button>
+
+        <div id="swapPanel">
+          <div style="font-size:13px; font-weight:800; opacity:.8; margin-bottom:10px;">Available Players</div>
+          <div id="swapList"></div>
+        </div>
+
+        <div class="statsWrap" id="statsWrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const allPlayers = {
+  qb1: {
+    id: "qb1",
+    slotType: "qb",
+    position: "QB",
+    name: "Jaxon Reed",
+    role: "Franchise Starter",
+    overall: 86,
+    archetype: "Pocket Passer",
+    stats: { Accuracy: 90, Strength: 84, Speed: 72 }
+  },
+  qb2: {
+    id: "qb2",
+    slotType: "qb",
+    position: "QB",
+    name: "Mason Vale",
+    role: "Backup QB",
+    overall: 79,
+    archetype: "Field General",
+    stats: { Accuracy: 82, Strength: 76, Speed: 68 }
+  },
+
+  rb1: {
+    id: "rb1",
+    slotType: "rb",
+    position: "RB",
+    name: "Malik Stone",
+    role: "Explosive Back",
+    overall: 85,
+    archetype: "Elusive Runner",
+    stats: { Speed: 89, "Break Tackle": 84, Agility: 88 }
+  },
+  rb2: {
+    id: "rb2",
+    slotType: "rb",
+    position: "RB",
+    name: "Trey Lawson",
+    role: "Power Back",
+    overall: 80,
+    archetype: "Power Runner",
+    stats: { Speed: 78, "Break Tackle": 87, Agility: 74 }
+  },
+
+  wr1: {
+    id: "wr1",
+    slotType: "wr",
+    position: "WR",
+    name: "Ty Harper",
+    role: "Primary Target",
+    overall: 84,
+    archetype: "Deep Threat",
+    stats: { Catching: 82, Speed: 91, Agility: 86 }
+  },
+  wr2: {
+    id: "wr2",
+    slotType: "wr",
+    position: "WR",
+    name: "Devon Price",
+    role: "Secondary Target",
+    overall: 83,
+    archetype: "Route Technician",
+    stats: { Catching: 85, Speed: 87, Agility: 84 }
+  },
+  wr3: {
+    id: "wr3",
+    slotType: "wr",
+    position: "WR",
+    name: "Kris Dalton",
+    role: "Bench WR",
+    overall: 79,
+    archetype: "Possession Receiver",
+    stats: { Catching: 84, Speed: 80, Agility: 78 }
+  },
+  wr4: {
+    id: "wr4",
+    slotType: "wr",
+    position: "WR",
+    name: "Rico Lane",
+    role: "Bench WR",
+    overall: 81,
+    archetype: "Speedster",
+    stats: { Catching: 76, Speed: 90, Agility: 85 }
+  },
+
+  ol1: {
+    id: "ol1",
+    slotType: "ol",
+    position: "OL",
+    name: "Cole Mercer",
+    role: "Line Anchor",
+    overall: 82,
+    archetype: "Balanced Blocker",
+    stats: { "Pass Block": 84, "Run Block": 81, Strength: 87 }
+  },
+  ol2: {
+    id: "ol2",
+    slotType: "ol",
+    position: "OL",
+    name: "Grant Holloway",
+    role: "Reserve Lineman",
+    overall: 78,
+    archetype: "Road Grader",
+    stats: { "Pass Block": 75, "Run Block": 82, Strength: 84 }
+  }
+};
+
+const lineup = {
+  qb: "qb1",
+  rb: "rb1",
+  wr1: "wr1",
+  wr2: "wr2",
+  ol: "ol1"
+};
+
+const statsWrap = document.getElementById("statsWrap");
+const detailName = document.getElementById("detailName");
+const detailMeta = document.getElementById("detailMeta");
+const detailOvr = document.getElementById("detailOvr");
+const detailArchetype = document.getElementById("detailArchetype");
+const lineupView = document.getElementById("lineupView");
+const detailView = document.getElementById("detailView");
+const swapBtn = document.getElementById("swapBtn");
+const swapPanel = document.getElementById("swapPanel");
+const swapList = document.getElementById("swapList");
+
+let selectedSlot = null;
+
+function goMenu() {
+  setScreen("menuScreen");
+  showLineup();
+}
+
+function goTeam() {
+  setScreen("teamScreen");
+  renderLineup();
+  showLineup();
+}
+
+function setScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showLineup() {
+  lineupView.style.display = "flex";
+  detailView.classList.remove("active");
+  swapPanel.style.display = "none";
+}
+
+function showDetails() {
+  lineupView.style.display = "none";
+  detailView.classList.add("active");
+}
+
+function getPlayerBySlot(slot) {
+  return allPlayers[lineup[slot]];
+}
+
+function renderLineup() {
+  document.querySelectorAll(".playerSpot").forEach(btn => {
+    const slot = btn.dataset.slot;
+    const player = getPlayerBySlot(slot);
+    const posLabel = slot === "wr1" ? "WR1" : slot === "wr2" ? "WR2" : player.position;
+
+    btn.innerHTML = `
+      <span class="posLabel">${posLabel}</span>
+      <span class="playerName">${player.name}</span>
+      <span class="playerOverall">OVR ${player.overall}</span>
+    `;
+  });
+}
+
+function getBenchOptions(slot) {
+  const currentPlayer = getPlayerBySlot(slot);
+  const slotType = currentPlayer.slotType;
+
+  return Object.values(allPlayers).filter(p => {
+    if (p.slotType !== slotType) return false;
+    return !Object.values(lineup).includes(p.id);
+  });
+}
+
+function renderSwapOptions(slot) {
+  const options = getBenchOptions(slot);
+  swapList.innerHTML = "";
+
+  if (!options.length) {
+    swapList.innerHTML = `<div style="opacity:.65; font-size:13px;">No available players to swap.</div>`;
+    return;
+  }
+
+  options.forEach(player => {
+    const btn = document.createElement("button");
+    btn.className = "swapOption";
+    btn.innerHTML = `
+      <div class="swapOptionName">${player.name} — OVR ${player.overall}</div>
+      <div class="swapOptionMeta">${player.position} • ${player.archetype}</div>
+    `;
+    btn.addEventListener("click", () => swapPlayer(slot, player.id));
+    swapList.appendChild(btn);
+  });
+}
+
+function swapPlayer(slot, newPlayerId) {
+  lineup[slot] = newPlayerId;
+  renderLineup();
+  selectPlayer(slot);
+  swapPanel.style.display = "none";
+}
+
+function selectPlayer(slot) {
+  selectedSlot = slot;
+  const player = getPlayerBySlot(slot);
+
+  detailName.textContent = player.name;
+  detailMeta.textContent = `${player.position} • ${player.role}`;
+  detailOvr.textContent = player.overall;
+  detailArchetype.textContent = player.archetype;
+
+  statsWrap.innerHTML = "";
+
+  Object.entries(player.stats).forEach(([statName, value]) => {
+    const row = document.createElement("div");
+    row.className = "statRow";
+
+    row.innerHTML = `
+      <div class="statName">${statName}</div>
+      <div class="statBar">
+        <div class="statFill" style="width:${value}%"></div>
+      </div>
+      <div class="statValue">${value}</div>
+    `;
+
+    statsWrap.appendChild(row);
+  });
+
+  renderSwapOptions(slot);
+  showDetails();
+}
+
+swapBtn.addEventListener("click", () => {
+  if (!selectedSlot) return;
+  const isOpen = swapPanel.style.display === "block";
+  swapPanel.style.display = isOpen ? "none" : "block";
+});
+
+document.querySelectorAll(".playerSpot").forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectPlayer(btn.dataset.slot);
+  });
+});
+
+renderLineup();
+</script>
+
+</body>
+</html>
